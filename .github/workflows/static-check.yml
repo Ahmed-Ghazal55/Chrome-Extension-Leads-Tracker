@@ -1,0 +1,27 @@
+name: Static checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check JavaScript syntax
+        run: node --check script.js
+      - name: Validate extension manifest
+        run: |
+          node -e "const fs=require('node:fs'); const m=JSON.parse(fs.readFileSync('manifest.json','utf8')); if(m.manifest_version!==3 || m.action?.default_popup!=='index.html') process.exit(1);"
+      - name: Reject generated archives from release packaging
+        run: |
+          echo 'Archives in this repository have not been verified or approved for distribution.'
+          find . -type f -name '*.zip' -not -path './.git/*' -print
+          echo 'No archives were executed or extracted.'
